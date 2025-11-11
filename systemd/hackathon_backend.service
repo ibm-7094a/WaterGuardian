@@ -1,0 +1,14 @@
+[Unit]
+Description=Main Complete Service
+After=network.target
+
+[Service]
+Type=simple
+User=hackathon
+WorkingDirectory=/home/hackathon/wtr
+ExecStart=/bin/bash -c 'source /home/hackathon/wtr/venv/bin/activate && exec python3 /home/hackathon/wtr/main_complete.py'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
