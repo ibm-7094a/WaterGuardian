@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grainger Cooling System Monitor | Water Guardian++</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1e3a8a;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .status-safe {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .status-critical {
+            background: #ef4444;
+            color: white;
+        }
+
+        .sensor-value {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin: 10px 0;
+        }
+
+        .sensor-label {
+            font-size: 0.95rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .sensor-unit {
+            font-size: 1.8rem;
+            color: #94a3b8;
+        }
+
+        .ai-analysis {
+            background: #3b82f6;
+            border-left: 4px solid #3b82f6;
+            padding: 18px;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+
+        .ai-analysis h3 {
+            color: #1e40af;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+        }
+
+        .ai-analysis p {
+            color: #475569;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .recommendations {
+            margin-top: 18px;
+        }
+
+        .recommendations h4 {
+            color: #1e3a8a;
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .recommendations ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .recommendations li {
+            background: #3b82f6;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #10b981;
+            color: #334155;
+            font-size: 0.95rem;
+        }
+
+        .recommendations li::before {
+            content: "⚡ ";
+            color: #3b82f6;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #1e3a8a;
+        }
+
+        .stat-value.savings {
+            color: #10b981;
+        }
+
+        .timestamp {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #cbd5e1;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .threshold-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .threshold-bar {
+            flex: 1;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .threshold-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .threshold-fill.safe {
+            background: #10b981;
+        }
+
+        .threshold-fill.warning {
+            background: #f59e0b;
+        }
+
+        .threshold-fill.critical {
+            background: #ef4444;
+        }
+
+        .wide-card {
+            grid-column: 1 / -1;
+        }
+
+        .graph-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            justify-content: center;
+        }
+
+        .graph-btn {
+            padding: 10px 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            background: white;
+            color: #475569;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .graph-btn:hover {
+            background: #f1f5f9;
+            border-color: #3b82f6;
+        }
+
+        .graph-btn.active {
+            background: #1e3a8a;
+            color: white;
+            border-color: #1e3a8a;
+        }
+
+        .impact-badge {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .sensor-value {
+                font-size: 2.5rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 Grainger Data Center Monitor</h1>
+            <div class="subtitle">Water Guardian++ Cooling System</div>
+            <p>Real-Time Server Cooling Water Quality Monitoring & Predictive Maintenance</p>
+        </div>
+
+        <div id="content" class="loading">
+            <div class="spinner"></div>
+            <p>Connecting to monitoring system...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://192.168.137.165:8000';
+        let currentData = null;
+        let tdsChart = null;
+        let tempChart = null;
+        let combinedChart = null;
+        let currentTimeRange = 1;
+
+        function formatAIAnalysis(text) {
+            // Parse and format the AI analysis for cleaner display
+            let formatted = text;
+            
+            // Make section headers bold
+            formatted = formatted.replace(/IMPACT:/g, '<strong style="color: #1e3a8a; font-size: 1.05rem;">💥 IMPACT:</strong>');
+            formatted = formatted.replace(/ROOT CAUSE:/g, '<strong style="color: #1e3a8a; font-size: 1.05rem;">🔍 ROOT CAUSE:</strong>');
+            formatted = formatted.replace(/ACTIONS:/g, '<strong style="color: #1e3a8a; font-size: 1.05rem;">⚡ ACTIONS:</strong>');
+            
+            // Remove numbered list items from text (they'll be shown in recommendations)
+            const lines = formatted.split('\n');
+            const cleanedLines = lines.filter(line => {
+                const trimmed = line.trim();
+                return !(trimmed.match(/^[1-3]\./)); // Remove lines starting with 1. 2. 3.
+            });
+            formatted = cleanedLines.join('\n');
+            
+            return formatted;
+        }
+
+        async function fetchLatestReading() {
+            try {
+                const response = await fetch(`${API_URL}/readings/latest`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    displayNoData();
+                } else {
+                    currentData = data;
+                    await displayData(data);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                displayError();
+            }
+        }
+
+        async function fetchHistory(hours = 1) {
+            try {
+                const response = await fetch(`${API_URL}/readings/history?hours=${hours}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                return null;
+            }
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                return null;
+            }
+        }
+
+        function initializeCharts(historyData) {
+            const timestamps = historyData.data.map(d => new Date(d.timestamp).toLocaleTimeString());
+            const tdsData = historyData.data.map(d => d.TDS);
+            const tempData = historyData.data.map(d => d.temperature);
+
+            const tdsCtx = document.getElementById('tdsChart').getContext('2d');
+            tdsChart = new Chart(tdsCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: 'TDS (ppm)',
+                        data: tdsData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'TDS (ppm)' }
+                        }
+                    }
+                }
+            });
+
+            const tempCtx = document.getElementById('tempChart').getContext('2d');
+            tempChart = new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: tempData,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Temperature (°C)' }
+                        }
+                    }
+                }
+            });
+
+            const combinedCtx = document.getElementById('combinedChart').getContext('2d');
+            combinedChart = new Chart(combinedCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [
+                        {
+                            label: 'TDS (ppm)',
+                            data: tdsData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            yAxisID: 'y',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Temperature (°C)',
+                            data: tempData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'TDS (ppm)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Temperature (°C)' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function updateCharts(hours) {
+            currentTimeRange = hours;
+            const history = await fetchHistory(hours);
+            
+            if (!history || history.count === 0) return;
+
+            const timestamps = history.data.map(d => new Date(d.timestamp).toLocaleTimeString());
+            const tdsData = history.data.map(d => d.TDS);
+            const tempData = history.data.map(d => d.temperature);
+
+            if (tdsChart) {
+                tdsChart.data.labels = timestamps;
+                tdsChart.data.datasets[0].data = tdsData;
+                tdsChart.update('none');
+            }
+
+            if (tempChart) {
+                tempChart.data.labels = timestamps;
+                tempChart.data.datasets[0].data = tempData;
+                tempChart.update('none');
+            }
+
+            if (combinedChart) {
+                combinedChart.data.labels = timestamps;
+                combinedChart.data.datasets[0].data = tdsData;
+                combinedChart.data.datasets[1].data = tempData;
+                combinedChart.update('none');
+            }
+
+            document.querySelectorAll('.graph-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.dataset.hours) === hours) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        async function displayData(data) {
+            const stats = await fetchStats();
+            const history = await fetchHistory(currentTimeRange);
+            
+            const statusClass = data.is_safe ? 'safe' : (data.ai_triggered ? 'critical' : 'warning');
+            const statusText = data.is_safe ? '✅ OPTIMAL' : (data.ai_triggered ? '🚨 ACTION REQUIRED' : '⚠️ MONITOR');
+            
+            const tdsPercent = Math.min((data.TDS / 1500) * 100, 100);
+            const tempPercent = Math.min(((data.temperature - 18) / 17) * 100, 100);
+            
+            const tdsClass = data.TDS > 1500 ? 'critical' : (data.TDS > 1200 ? 'warning' : 'safe');
+            const tempClass = (data.temperature < 18 || data.temperature > 27) ? 'warning' : 'safe';
+
+            let html = `
+                <div class="grid">
+                    <div class="card">
+                        <h2>System Status</h2>
+                        <div class="status-badge status-${statusClass}">${statusText}</div>
+                        <div class="timestamp">
+                            Last Reading: ${new Date(data.timestamp).toLocaleString()}
+                        </div>
+                        ${data.ai_triggered ? '<div class="impact-badge">⚡ Predictive Alert: Maintenance Required</div>' : ''}
+                    </div>
+
+                    <div class="card">
+                        <div class="sensor-label">Water Conductivity (TDS)</div>
+                        <div class="sensor-value">
+                            ${data.TDS.toFixed(0)} <span class="sensor-unit">ppm</span>
+                        </div>
+                        <div class="threshold-indicator">
+                            <div class="threshold-bar">
+                                <div class="threshold-fill ${tdsClass}" style="width: ${tdsPercent}%"></div>
+                            </div>
+                            <span style="font-size: 0.9rem; color: #64748b;">0-1500</span>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.85rem; color: #64748b;">
+                            Optimal: 60-500 ppm | Scale Risk: >1200 ppm | Critical: >1500 ppm
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="sensor-label">Cooling Water Temperature</div>
+                        <div class="sensor-value">
+                            ${data.temperature.toFixed(1)} <span class="sensor-unit">°C</span>
+                        </div>
+                        <div class="threshold-indicator">
+                            <div class="threshold-bar">
+                                <div class="threshold-fill ${tempClass}" style="width: ${tempPercent}%"></div>
+                            </div>
+                            <span style="font-size: 0.9rem; color: #64748b;">18-35</span>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.85rem; color: #64748b;">
+                            Optimal: 18-27°C | Reduced Efficiency: >27°C
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card wide-card">
+                    <h2>📈 Real-Time Monitoring</h2>
+                    <div class="graph-controls">
+                        <button class="graph-btn active" data-hours="1" onclick="updateCharts(1)">1 Hour</button>
+                        <button class="graph-btn" data-hours="6" onclick="updateCharts(6)">6 Hours</button>
+                        <button class="graph-btn" data-hours="24" onclick="updateCharts(24)">24 Hours</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="combinedChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="card">
+                        <h2>TDS Trend (Scale Detection)</h2>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="tdsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Temperature Trend (Cooling Efficiency)</h2>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                ${data.analysis ? `
+                <div class="card wide-card">
+                    <h2>🤖 AI Predictive Analysis</h2>
+                    <div class="ai-analysis">
+                        <div style="white-space: pre-line; line-height: 1.8;">${formatAIAnalysis(data.analysis.analysis)}</div>
+                        
+                        ${data.analysis.recommendations && data.analysis.recommendations.length > 0 ? `
+                        <div class="recommendations">
+                            <h4>⚡ Immediate Actions Required:</h4>
+                            <ul>
+                                ${data.analysis.recommendations.map((rec, i) => `<li><strong>${i+1}.</strong> ${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${stats ? `
+                <div class="card">
+                    <h2>💰 Business Impact (24 Hours)</h2>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Readings</span>
+                        <span class="stat-value">${stats.total_readings}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Anomalies Detected</span>
+                        <span class="stat-value">${stats.anomalies_detected}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">AI Analyses Triggered</span>
+                        <span class="stat-value">${stats.ai_analyses}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Downtime Prevented (est.)</span>
+                        <span class="stat-value">${stats.estimated_downtime_prevented_hours} hrs</span>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('content').innerHTML = html;
+
+            if (history && history.count > 0) {
+                setTimeout(() => initializeCharts(history), 100);
+            }
+        }
+
+        function displayNoData() {
+            document.getElementById('content').innerHTML = `
+                <div class="card no-data">
+                    <h2>⏳ Initializing System</h2>
+                    <p>Waiting for sensor data from cooling system...</p>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">
+                        Send test data to: POST http://192.168.137.165:8000/sensor_data
+                    </p>
+                </div>
+            `;
+        }
+
+        function displayError() {
+            document.getElementById('content').innerHTML = `
+                <div class="card no-data">
+                    <h2>⚠️ Connection Error</h2>
+                    <p>Cannot connect to monitoring backend.</p>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">
+                        Ensure backend is running at http://192.168.137.165:8000
+                    </p>
+                </div>
+            `;
+        }
+
+        fetchLatestReading();
+        setInterval(() => {
+            fetchLatestReading();
+            updateCharts(currentTimeRange);
+        }, 5000);
+    </script>
+</body>
+</html>
