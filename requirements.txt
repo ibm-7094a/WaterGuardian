@@ -1,0 +1,28 @@
+# Core web frameworks
+fastapi==0.115.0
+uvicorn==0.30.1
+flask==3.0.3
+
+# Database
+sqlalchemy==2.0.30
+
+# Data models & validation
+pydantic==2.7.4
+python-dotenv==1.0.1
+
+# AI integration (Gemini)
+google-generativeai==0.8.3
+
+# Networking / communication
+requests==2.32.3
+pyserial==3.5
+
+# Email + notifications
+smtplib3==0.1.0  # optional fallback if needed
+email-validator==2.2.0
+
+# Optional FastAPI features
+python-multipart==0.0.9
+
+# Utilities (optional, helpful for dev)
+jinja2==3.1.4
